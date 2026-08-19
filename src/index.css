@@ -1,0 +1,108 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-navy: #0b1e3d;
+  --color-navy-2: #162c52;
+  --color-navy-3: #1e3a6e;
+  --color-gold: #c9a84c;
+  --color-gold-light: #e8c97a;
+  --color-gold-tint: #f5edda;
+
+  --color-success: #1b5e35;
+  --color-success-bg: #e8f5ec;
+  --color-warning: #bf360c;
+  --color-warning-bg: #fff3e0;
+  --color-info: #0d47a1;
+  --color-info-bg: #e3f2fd;
+  --color-danger: #b71c1c;
+  --color-danger-bg: #ffebee;
+
+  --font-display: 'Cormorant Garamond', ui-serif, Georgia, serif;
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+
+  --sidebar-width: 200px;
+  --radius-card: 12px;
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-canvas: var(--canvas);
+  --color-text-primary: var(--text-primary);
+  --color-text-muted: var(--text-muted);
+  --color-border-subtle: var(--border-subtle);
+  --color-gold-tint-adaptive: var(--gold-tint-adaptive);
+}
+
+:root {
+  --canvas: #f7f6f3;
+  --surface: #ffffff;
+  --text-primary: #1a2535;
+  --text-muted: #7a8599;
+  --border-subtle: rgba(11, 30, 61, 0.09);
+  --gold-tint-adaptive: #f5edda;
+  color-scheme: light;
+}
+
+.dark {
+  --canvas: #0d1117;
+  --surface: #161b22;
+  --text-primary: #e6edf3;
+  --text-muted: #8b949e;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --gold-tint-adaptive: #221d0a;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-canvas);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+}
+
+.scroll-thin::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: var(--color-border-subtle);
+  border-radius: 999px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
