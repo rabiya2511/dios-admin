@@ -27,7 +27,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { id: 'a-services', label: 'Services & Pricing', pageTitle: 'Service & Pricing Editor', to: '/admin/services', icon: Zap, mode: 'admin' },
       { id: 'a-providers', label: 'Providers', pageTitle: 'Service Providers', to: '/admin/providers', icon: Handshake, mode: 'admin' },
       { id: 'a-tasks', label: 'Task Queue', to: '/admin/tasks', icon: ListTodo, mode: 'admin' },
-      { id: 'a-settings', label: 'Settings', pageTitle: 'Platform Settings', to: '/admin/settings', icon: Settings, mode: 'admin' },
+      { id: 'a-settings', label: 'Platform Settings', to: '/admin/settings', icon: Settings, mode: 'admin' },
     ],
   },
   {
