@@ -6,25 +6,30 @@ import { DataTable } from '@/components/common/DataTable';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Avatar } from '@/components/common/Avatar';
 import { Button } from '@/components/common/Button';
-import { ADMIN_USERS } from '@/constants/mockData';
+import { EditUserModal } from '@/components/users/EditUserModal';
+import { BlockUserModal } from '@/components/users/BlockUserModal';
+import { useUsers } from '@/hooks/useUsers';
 import { USER_STATUS_MAP } from '@/utils/statusMaps';
 import type { AdminUser } from '@/types/domain';
 
-type FilterValue = 'all' | 'active' | 'inactive';
+type FilterValue = 'all' | 'active' | 'inactive' | 'blocked';
 
 export default function Users() {
+  const { users, unblockUser } = useUsers();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterValue>('all');
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+  const [blockingUser, setBlockingUser] = useState<AdminUser | null>(null);
 
   const filteredUsers = useMemo(() => {
-    return ADMIN_USERS.filter((u) => {
+    return users.filter((u) => {
       const matchesSearch =
         u.name.toLowerCase().includes(search.toLowerCase()) ||
         u.email.toLowerCase().includes(search.toLowerCase());
       const matchesFilter = filter === 'all' || u.status === filter;
       return matchesSearch && matchesFilter;
     });
-  }, [search, filter]);
+  }, [users, search, filter]);
 
   return (
     <div>
@@ -54,6 +59,7 @@ export default function Users() {
               <option value="all">All Users</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
+              <option value="blocked">Blocked</option>
             </select>
           </div>
 
@@ -83,14 +89,20 @@ export default function Users() {
               { header: 'Revenue', render: (u) => u.revenue },
               {
                 header: 'Actions',
-                render: () => (
+                render: (u) => (
                   <div className="flex gap-1.5">
-                    <Button variant="secondary" size="sm">
+                    <Button variant="secondary" size="sm" onClick={() => setEditingUser(u)}>
                       Edit
                     </Button>
-                    <Button variant="danger" size="sm">
-                      Block
-                    </Button>
+                    {u.status === 'blocked' ? (
+                      <Button variant="success" size="sm" onClick={() => unblockUser(u.id)}>
+                        Unblock
+                      </Button>
+                    ) : (
+                      <Button variant="danger" size="sm" onClick={() => setBlockingUser(u)}>
+                        Block
+                      </Button>
+                    )}
                   </div>
                 ),
               },
@@ -98,6 +110,9 @@ export default function Users() {
           />
         </Card>
       </div>
+
+      {editingUser && <EditUserModal user={editingUser} onClose={() => setEditingUser(null)} />}
+      {blockingUser && <BlockUserModal user={blockingUser} onClose={() => setBlockingUser(null)} />}
     </div>
   );
 }

@@ -30,7 +30,7 @@ export interface ProviderAvailability {
   busyCount?: number;
 }
 
-export type UserStatus = 'active' | 'inactive';
+export type UserStatus = 'active' | 'inactive' | 'blocked';
 
 export interface AdminUser {
   id: string;
@@ -41,6 +41,7 @@ export interface AdminUser {
   status: UserStatus;
   orders: number;
   revenue: string;
+  blockedAt?: string;
 }
 
 export interface OrderRecord {
@@ -137,4 +138,94 @@ export interface LedgerTransaction {
   debit: number;
   credit: number;
   balance: number;
+}
+
+export interface OrderDetailRecord {
+  id: string;
+  orderNo: string;
+  client: string;
+  email: string;
+  service: string;
+  package: string;
+  amount: string;
+  status: OrderStatus;
+  provider: string;
+  orderDate: string;
+  dueDate: string;
+}
+export type ProviderTaskStatus = 'pending-decision' | 'in-progress' | 'docs-awaited' | 'review' | 'blocked' | 'completed';
+
+export interface ProviderTask {
+  id: string;
+  ref: string;
+  title: string;
+  client: string;
+  category: string;
+  brief: string;
+  dueDate: string;
+  estimatedHours: string;
+  payout: number;
+  status: ProviderTaskStatus;
+  progress: number; // 0-100, only meaningful once accepted
+  completedDate?: string;
+  rating?: number; // 1-5, set once client rates it
+}
+
+export interface ProviderPayout {
+  id: string;
+  payoutRef: string;
+  period: string;
+  taskCount: number;
+  gross: number;
+  tds: number;
+  netPaid: number;
+  status: 'paid' | 'pending';
+}
+
+export interface ProviderProfile {
+  id: string;
+  name: string;
+  initials: string;
+  role: string; // e.g. "CA · YBS-PRV-0021"
+  avatarColor: string;
+}
+
+export type ProviderRole = 'CA' | 'CS' | 'DEV' | 'DES' | 'MKT' | 'HR' | 'FSS' | 'ISO' | 'LEG';
+export type CommissionType = 'percent' | 'fixed';
+export type BooksAccessLevel = 'full' | 'scoped' | 'none';
+
+export interface AdminProvider {
+  id: string;
+  name: string;
+  initials: string;
+  email: string;
+  mobile: string;
+  role: ProviderRole;
+  commissionType: CommissionType;
+  commissionValue: number;
+  tasks: number;
+  availability: ProviderStatus;
+  booksAccess: BooksAccessLevel;
+  status: 'active' | 'inactive';
+}
+
+export type TaskAcceptStatus = 'unassigned' | 'pending' | 'accepted' | 'in-progress' | 'rejected' | 'completed';
+export type TaskPriority = 'High' | 'Medium' | 'Low';
+
+export interface TaskRecord {
+  id: string;
+  ref: string; // e.g. 'PRV-CA-2026-0047', or 'Unassigned' when no ref assigned yet
+  service: string;
+  client: string;
+  provider: string; // '—' when unassigned
+  acceptStatus: TaskAcceptStatus;
+  priority: TaskPriority;
+  createdDate: string;
+  dueDate: string;
+  estimatedTime: string;
+  description: string;
+  progress: number; // 0-100
+  category: string;
+  categoryTone: 'blue' | 'orange' | 'green' | 'gray';
+  notes?: string;
 }

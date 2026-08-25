@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 
-export type AppMode = 'admin' | 'books';
+export type AppMode = 'admin' | 'books' | 'provider';
 
 export interface NavItem {
   id: string;

@@ -14,6 +14,12 @@ import Expenses from '@/pages/books/Expenses';
 import Ledger from '@/pages/books/Ledger';
 import Reports from '@/pages/books/Reports';
 import CreateInvoice from '@/pages/books/CreateInvoice';
+import OrderDetail from '@/pages/admin/OrderDetail';
+import ProviderDashboard from '@/pages/provider/ProviderDashboard';
+import TaskInbox from '@/pages/provider/TaskInbox';
+import ActiveTasks from '@/pages/provider/ActiveTasks';
+import CompletedTasks from '@/pages/provider/CompletedTasks';
+import Earnings from '@/pages/provider/Earnings';
 
 export const router = createBrowserRouter([
   {
@@ -34,6 +40,12 @@ export const router = createBrowserRouter([
       { path: '/books/expenses', element: <Expenses /> },
       { path: '/books/ledger', element: <Ledger /> },
       { path: '/books/reports', element: <Reports /> },
+      { path: '/provider/dashboard', element: <ProviderDashboard /> },
+      { path: '/provider/inbox', element: <TaskInbox /> },
+      { path: '/provider/active', element: <ActiveTasks /> },
+      { path: '/provider/completed', element: <CompletedTasks /> },
+      { path: '/provider/earnings', element: <Earnings /> },
+      { path: '/admin/orders/:orderId', element: <OrderDetail /> },
       { path: '*', element: <Navigate to="/admin/dashboard" replace /> },
     ],
   },

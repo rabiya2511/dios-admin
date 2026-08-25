@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Topbar } from '@/components/layout/Topbar';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { FormField } from '@/components/common/FormField';
 import { ToggleRow } from '@/components/common/ToggleRow';
+import { useUsers } from '@/hooks/useUsers';
 
 export default function AdminSettings() {
   const [enableReferral, setEnableReferral] = useState(true);
@@ -14,6 +15,19 @@ export default function AdminSettings() {
   const [smsNotif, setSmsNotif] = useState(true);
   const [whatsappNotif, setWhatsappNotif] = useState(false);
   const [deadlineReminders, setDeadlineReminders] = useState(true);
+
+  const { users, unblockUser } = useUsers();
+  const [blockedSearch, setBlockedSearch] = useState('');
+
+  const blockedUsers = useMemo(() => {
+    return users
+      .filter((u) => u.status === 'blocked')
+      .filter(
+        (u) =>
+          u.name.toLowerCase().includes(blockedSearch.toLowerCase()) ||
+          u.email.toLowerCase().includes(blockedSearch.toLowerCase()),
+      );
+  }, [users, blockedSearch]);
 
   return (
     <div>
@@ -101,6 +115,38 @@ export default function AdminSettings() {
                 <ToggleRow label="WhatsApp Notifications" checked={whatsappNotif} onChange={setWhatsappNotif} />
                 <ToggleRow label="Deadline Reminders" checked={deadlineReminders} onChange={setDeadlineReminders} />
               </div>
+            </Card>
+
+            <Card>
+              <h3 className="mb-3.5 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+                Blocked Users
+              </h3>
+              <input
+                value={blockedSearch}
+                onChange={(e) => setBlockedSearch(e.target.value)}
+                placeholder="Search blocked users..."
+                className="mb-3 w-full rounded-lg border border-border-subtle bg-canvas px-3 py-2 text-[12px] text-text-primary outline-none focus:border-gold"
+              />
+              {blockedUsers.length === 0 ? (
+                <p className="py-4 text-center text-[12px] text-text-muted">No blocked users.</p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {blockedUsers.map((u) => (
+                    <div
+                      key={u.id}
+                      className="flex items-center justify-between rounded-[10px] border border-border-subtle p-2.5"
+                    >
+                      <div>
+                        <div className="text-[12px] font-medium text-text-primary">{u.name}</div>
+                        <div className="text-[11px] text-text-muted">{u.email}</div>
+                      </div>
+                      <Button variant="success" size="sm" onClick={() => unblockUser(u.id)}>
+                        Unblock
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </Card>
           </div>
         </div>

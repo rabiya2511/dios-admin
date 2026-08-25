@@ -8,24 +8,30 @@ import type { AppMode } from '@/types/navigation';
 const MODE_PILL_CLASSES: Record<AppMode, string> = {
   admin: 'bg-gold/20 text-gold',
   books: 'bg-emerald-500/20 text-emerald-400',
+  provider: 'bg-sky-500/20 text-sky-400',
 };
 
 const MODE_LABELS: Record<AppMode, string> = {
   admin: 'Admin Panel',
   books: 'Books & Accounts',
+  provider: 'Provider Portal',
 };
 
 export function Sidebar() {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
 
-  const activeMode: AppMode = location.pathname.startsWith('/books') ? 'books' : 'admin';
+  const activeMode: AppMode = location.pathname.startsWith('/books')
+    ? 'books'
+    : location.pathname.startsWith('/provider')
+      ? 'provider'
+      : 'admin';
 
   return (
     <aside className="hidden w-(--sidebar-width) shrink-0 lg:block">
       <div className="fixed inset-y-0 left-0 flex w-(--sidebar-width) flex-col bg-navy">
         <div className="border-b border-white/[0.07] px-4 py-4">
-          <div className="font-display text-lg font-bold leading-none text-white">StartupSaaS</div>
+          <div className="font-display text-lg font-bold leading-none text-white">YBS</div>
           <span
             className={[
               'mt-1.5 inline-block rounded px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider',

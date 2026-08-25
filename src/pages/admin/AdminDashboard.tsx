@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Topbar } from '@/components/layout/Topbar';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { Card } from '@/components/common/Card';
@@ -6,6 +7,8 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { ProgressBar } from '@/components/common/ProgressBar';
 import { Button } from '@/components/common/Button';
 import { PageHeader } from '@/components/common/PageHeader';
+import { useState } from 'react';
+import { AssignTaskModal } from '@/components/tasks/AssignTaskModal';
 import {
   RECENT_ORDERS,
   UNASSIGNED_TASKS,
@@ -13,6 +16,7 @@ import {
   PROVIDER_AVAILABILITY,
 } from '@/constants/mockData';
 import { ORDER_STATUS_MAP, PROVIDER_STATUS_MAP } from '@/utils/statusMaps';
+import { useOrders } from '@/context/OrdersContext';
 import type { RecentOrder, UnassignedTask } from '@/types/domain';
 
 const TASK_CATEGORY_CLASSES: Record<UnassignedTask['categoryTone'], string> = {
@@ -23,6 +27,11 @@ const TASK_CATEGORY_CLASSES: Record<UnassignedTask['categoryTone'], string> = {
 };
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
+  const { orderStatuses } = useOrders();
+  const [tasks, setTasks] = useState(UNASSIGNED_TASKS);
+  const [assigningTask, setAssigningTask] = useState<UnassignedTask | null>(null);
+
   return (
     <div>
       <Topbar />
@@ -59,14 +68,15 @@ export default function AdminDashboard() {
                   {
                     header: 'Status',
                     render: (o) => {
-                      const meta = ORDER_STATUS_MAP[o.status];
+                      const currentStatus = orderStatuses[o.id] ?? o.status;
+                      const meta = ORDER_STATUS_MAP[currentStatus];
                       return <StatusBadge label={meta.label} tone={meta.tone} />;
                     },
                   },
                   {
                     header: 'Action',
-                    render: () => (
-                      <Button variant="secondary" size="sm">
+                    render: (o) => (
+                      <Button variant="secondary" size="sm" onClick={() => navigate(`/admin/orders/${o.id}`)}>
                         View
                       </Button>
                     ),
@@ -80,7 +90,7 @@ export default function AdminDashboard() {
                 Task Queue — Unassigned
               </h3>
               <DataTable<UnassignedTask>
-                data={UNASSIGNED_TASKS}
+                data={tasks}
                 rowKey={(t) => t.id}
                 columns={[
                   { header: 'Task', render: (t) => <span className="font-medium text-info">{t.task}</span> },
@@ -100,8 +110,8 @@ export default function AdminDashboard() {
                   },
                   {
                     header: 'Action',
-                    render: () => (
-                      <Button variant="gold" size="sm">
+                    render: (t) => (
+                      <Button variant="gold" size="sm" onClick={() => setAssigningTask(t)}>
                         Assign
                       </Button>
                     ),
@@ -150,7 +160,16 @@ export default function AdminDashboard() {
             </Card>
           </div>
         </div>
+
+        {assigningTask && (
+          <AssignTaskModal
+            task={assigningTask}
+            onClose={() => setAssigningTask(null)}
+            onAssigned={() => setTasks((prev) => prev.filter((t) => t.id !== assigningTask.id))}
+          />
+        )}
       </div>
     </div>
   );
 }
+
