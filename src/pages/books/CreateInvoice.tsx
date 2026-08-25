@@ -1,9 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Topbar } from '@/components/layout/Topbar';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { FormField } from '@/components/common/FormField';
+import { Toast } from '@/components/common/Toast';
+import { useInvoices } from '@/hooks/useInvoices';
 
 interface LineItem {
   id: string;
@@ -26,7 +29,19 @@ function formatDate(value: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+// Matches the short "Mon Day" format used by existing invoice mock data (no year).
+function formatDueDateShort(value: string): string {
+  if (!value) return '';
+  const d = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 export default function CreateInvoice() {
+  const navigate = useNavigate();
+  const { addInvoice } = useInvoices();
+  const previewRef = useRef<HTMLDivElement>(null);
+
   const [invoiceNumber, setInvoiceNumber] = useState('INV-0025');
   const [invoiceDate, setInvoiceDate] = useState('2024-03-15');
   const [dueDate, setDueDate] = useState('2024-03-30');
@@ -40,6 +55,9 @@ export default function CreateInvoice() {
   const [lineItems, setLineItems] = useState<LineItem[]>([
     { id: 'li1', description: 'Company Registration – Growth', qty: 1, rate: 9999, gstPercent: 18 },
   ]);
+
+  const [formError, setFormError] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   function updateLineItem<K extends keyof LineItem>(id: string, field: K, value: LineItem[K]) {
     setLineItems((items) => items.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
@@ -72,6 +90,45 @@ export default function CreateInvoice() {
     : null;
   const gstLabel = commonGstPercent !== null ? `GST (${commonGstPercent}%)` : 'GST';
 
+  function handlePreview() {
+    previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function handleSaveAndSend() {
+    if (!clientName.trim()) {
+      setFormError('Client name is required.');
+      return;
+    }
+    if (lineItems.length === 0 || lineItems.every((i) => !i.description.trim())) {
+      setFormError('Add at least one line item with a description.');
+      return;
+    }
+    if (!dueDate) {
+      setFormError('Due date is required.');
+      return;
+    }
+
+    setFormError(null);
+
+    const serviceLabel =
+      itemsWithTotals.length === 1
+        ? itemsWithTotals[0].description || 'Service'
+        : `${itemsWithTotals[0].description || 'Service'} +${itemsWithTotals.length - 1} more`;
+
+    addInvoice({
+      client: clientName,
+      service: serviceLabel,
+      amount: subtotal,
+      gst: gstTotal,
+      total: grandTotal,
+      dueDate: formatDueDateShort(dueDate),
+      status: 'due',
+    });
+
+    setToastMessage('Invoice created and sent successfully.');
+    setTimeout(() => navigate('/books/invoices'), 900);
+  }
+
   return (
     <div>
       <Topbar />
@@ -81,15 +138,21 @@ export default function CreateInvoice() {
           subtitle="Fill in details to generate a GST-compliant invoice"
           action={
             <div className="flex gap-2">
-              <Button variant="secondary" size="sm">
+              <Button variant="secondary" size="sm" onClick={handlePreview}>
                 Preview
               </Button>
-              <Button variant="primary" size="sm">
+              <Button variant="primary" size="sm" onClick={handleSaveAndSend}>
                 Save &amp; Send
               </Button>
             </div>
           }
         />
+
+        {formError && (
+          <div className="mb-3.5 rounded-lg border border-danger/20 bg-danger-bg px-3 py-2 text-[12px] text-danger">
+            {formError}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 gap-3.5 xl:grid-cols-2">
           {/* LEFT: form */}
@@ -232,7 +295,7 @@ export default function CreateInvoice() {
           </div>
 
           {/* RIGHT: live preview */}
-          <div>
+          <div ref={previewRef}>
             <Card>
               <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
                 Invoice Preview
@@ -320,6 +383,8 @@ export default function CreateInvoice() {
             </Card>
           </div>
         </div>
+
+        {toastMessage && <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />}
       </div>
     </div>
   );
