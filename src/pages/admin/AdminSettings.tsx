@@ -5,16 +5,36 @@ import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { FormField } from '@/components/common/FormField';
 import { ToggleRow } from '@/components/common/ToggleRow';
+import { Toast } from '@/components/common/Toast';
 import { useUsers } from '@/hooks/useUsers';
 
 export default function AdminSettings() {
+  // General Settings
+  const [platformName, setPlatformName] = useState('StartupSaaS');
+  const [supportEmail, setSupportEmail] = useState('support@startupsaas.in');
+  const [gstNumber, setGstNumber] = useState('27AABCS1429B1ZB');
+  const [defaultGstRate, setDefaultGstRate] = useState(18);
+  const [currency, setCurrency] = useState('INR (₹)');
+
+  // Referral Settings
+  const [referrerReward, setReferrerReward] = useState(500);
+  const [newUserDiscount, setNewUserDiscount] = useState(300);
   const [enableReferral, setEnableReferral] = useState(true);
   const [autoApproveRewards, setAutoApproveRewards] = useState(false);
+
+  // Task Assignment Rules
   const [autoAssign, setAutoAssign] = useState(true);
+  const [reassignAfterHrs, setReassignAfterHrs] = useState(24);
+  const [maxRejections, setMaxRejections] = useState(3);
+  const [assignmentStrategy, setAssignmentStrategy] = useState('Round Robin');
+
+  // Notification Settings
   const [emailNotif, setEmailNotif] = useState(true);
   const [smsNotif, setSmsNotif] = useState(true);
   const [whatsappNotif, setWhatsappNotif] = useState(false);
   const [deadlineReminders, setDeadlineReminders] = useState(true);
+
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const { users, unblockUser } = useUsers();
   const [blockedSearch, setBlockedSearch] = useState('');
@@ -29,6 +49,33 @@ export default function AdminSettings() {
       );
   }, [users, blockedSearch]);
 
+  function handleSaveAll() {
+    // No backend exists yet — settings live in this page's state for the
+    // session, consistent with how Orders/Tasks/Invoices are handled elsewhere.
+    const settingsSnapshot = {
+      platformName,
+      supportEmail,
+      gstNumber,
+      defaultGstRate,
+      currency,
+      referrerReward,
+      newUserDiscount,
+      enableReferral,
+      autoApproveRewards,
+      autoAssign,
+      reassignAfterHrs,
+      maxRejections,
+      assignmentStrategy,
+      emailNotif,
+      smsNotif,
+      whatsappNotif,
+      deadlineReminders,
+    };
+    // eslint-disable-next-line no-console
+    console.log('Platform settings saved:', settingsSnapshot);
+    setToastMessage('All changes saved successfully.');
+  }
+
   return (
     <div>
       <Topbar />
@@ -37,7 +84,7 @@ export default function AdminSettings() {
           title="Platform Settings"
           subtitle="Configure global platform options, notifications and integrations"
           action={
-            <Button variant="primary" size="sm">
+            <Button variant="primary" size="sm" onClick={handleSaveAll}>
               Save All Changes
             </Button>
           }
@@ -50,16 +97,33 @@ export default function AdminSettings() {
                 General Settings
               </h3>
               <div className="flex flex-col gap-3">
-                <FormField label="Platform Name" defaultValue="StartupSaaS" />
-                <FormField label="Support Email" defaultValue="support@startupsaas.in" />
-                <FormField label="GST Number" defaultValue="27AABCS1429B1ZB" />
+                <FormField
+                  label="Platform Name"
+                  value={platformName}
+                  onChange={(e) => setPlatformName(e.target.value)}
+                />
+                <FormField
+                  label="Support Email"
+                  value={supportEmail}
+                  onChange={(e) => setSupportEmail(e.target.value)}
+                />
+                <FormField label="GST Number" value={gstNumber} onChange={(e) => setGstNumber(e.target.value)} />
                 <div className="grid grid-cols-2 gap-3">
-                  <FormField label="Default GST Rate (%)" type="number" defaultValue={18} />
+                  <FormField
+                    label="Default GST Rate (%)"
+                    type="number"
+                    value={defaultGstRate}
+                    onChange={(e) => setDefaultGstRate(Number(e.target.value))}
+                  />
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
                       Currency
                     </label>
-                    <select className="cursor-pointer rounded-lg border border-border-subtle bg-canvas px-3 py-2 text-[12px] text-text-primary outline-none focus:border-gold">
+                    <select
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value)}
+                      className="cursor-pointer rounded-lg border border-border-subtle bg-canvas px-3 py-2 text-[12px] text-text-primary outline-none focus:border-gold"
+                    >
                       <option>INR (₹)</option>
                       <option>USD ($)</option>
                     </select>
@@ -73,8 +137,18 @@ export default function AdminSettings() {
                 Referral Settings
               </h3>
               <div className="grid grid-cols-2 gap-3">
-                <FormField label="Referrer Reward (₹)" type="number" defaultValue={500} />
-                <FormField label="New User Discount (₹)" type="number" defaultValue={300} />
+                <FormField
+                  label="Referrer Reward (₹)"
+                  type="number"
+                  value={referrerReward}
+                  onChange={(e) => setReferrerReward(Number(e.target.value))}
+                />
+                <FormField
+                  label="New User Discount (₹)"
+                  type="number"
+                  value={newUserDiscount}
+                  onChange={(e) => setNewUserDiscount(Number(e.target.value))}
+                />
               </div>
               <div className="mt-1">
                 <ToggleRow label="Enable Referral Program" checked={enableReferral} onChange={setEnableReferral} bordered />
@@ -90,14 +164,28 @@ export default function AdminSettings() {
               </h3>
               <ToggleRow label="Enable Auto-Assignment" checked={autoAssign} onChange={setAutoAssign} />
               <div className="mt-3 grid grid-cols-2 gap-3">
-                <FormField label="Reassign After (hrs)" type="number" defaultValue={24} />
-                <FormField label="Max Rejections" type="number" defaultValue={3} />
+                <FormField
+                  label="Reassign After (hrs)"
+                  type="number"
+                  value={reassignAfterHrs}
+                  onChange={(e) => setReassignAfterHrs(Number(e.target.value))}
+                />
+                <FormField
+                  label="Max Rejections"
+                  type="number"
+                  value={maxRejections}
+                  onChange={(e) => setMaxRejections(Number(e.target.value))}
+                />
               </div>
               <div className="mt-3 flex flex-col gap-1.5">
                 <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
                   Assignment Strategy
                 </label>
-                <select className="cursor-pointer rounded-lg border border-border-subtle bg-canvas px-3 py-2 text-[12px] text-text-primary outline-none focus:border-gold">
+                <select
+                  value={assignmentStrategy}
+                  onChange={(e) => setAssignmentStrategy(e.target.value)}
+                  className="cursor-pointer rounded-lg border border-border-subtle bg-canvas px-3 py-2 text-[12px] text-text-primary outline-none focus:border-gold"
+                >
                   <option>Round Robin</option>
                   <option>Best Rated</option>
                   <option>Least Busy</option>
@@ -150,6 +238,8 @@ export default function AdminSettings() {
             </Card>
           </div>
         </div>
+
+        {toastMessage && <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />}
       </div>
     </div>
   );
