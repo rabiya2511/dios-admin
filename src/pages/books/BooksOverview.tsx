@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Topbar } from '@/components/layout/Topbar';
 import { PageHeader } from '@/components/common/PageHeader';
@@ -7,12 +8,46 @@ import { DataTable } from '@/components/common/DataTable';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ProgressBar } from '@/components/common/ProgressBar';
 import { Button } from '@/components/common/Button';
-import { RECENT_INVOICES, RECENT_BILLS } from '@/constants/booksMockData';
-import { PAYMENT_STATUS_MAP } from '@/utils/statusMaps';
-import type { RecentInvoice, RecentBill } from '@/types/accounting';
+import { Toast } from '@/components/common/Toast';
+import { useInvoices, updateInvoiceStatus } from '@/store/invoicesStore';
+import { useBills, updateBillStatus } from '@/store/billsStore';
+import { INVOICE_STATUS_MAP, BILL_STATUS_MAP } from '@/utils/statusMaps';
+import type { Invoice, Bill } from '@/types/domain';
 
 export default function BooksOverview() {
   const navigate = useNavigate();
+  const invoices = useInvoices();
+  const bills = useBills();
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const recentInvoices = invoices.slice(0, 4);
+  const recentBills = bills.slice(0, 4);
+
+  function handleInvoiceAction(invoice: Invoice) {
+    if (invoice.status === 'paid') {
+      navigate('/books/invoices');
+      return;
+    }
+    if (invoice.status === 'overdue') {
+      // No email/SMS backend exists yet — this simulates the reminder being
+      // sent and gives the admin visible confirmation, consistent with how
+      // other unconnected actions (e.g. Task Queue assignment) work today.
+      setToastMessage(`Reminder sent to ${invoice.client} for ${invoice.invoiceNo}.`);
+      return;
+    }
+    // 'due' or 'scheduled' → record the payment as received.
+    updateInvoiceStatus(invoice.id, 'paid');
+    setToastMessage(`${invoice.invoiceNo} marked as paid.`);
+  }
+
+  function handleBillAction(bill: Bill) {
+    if (bill.status === 'due') {
+      updateBillStatus(bill.id, 'paid');
+      setToastMessage(`${bill.billNo} marked as paid.`);
+      return;
+    }
+    navigate('/books/bills');
+  }
 
   return (
     <div>
@@ -55,25 +90,30 @@ export default function BooksOverview() {
                   View all
                 </button>
               </div>
-              <DataTable<RecentInvoice>
-                data={RECENT_INVOICES}
+              <DataTable<Invoice>
+                data={recentInvoices}
                 rowKey={(i) => i.id}
+                emptyMessage="No invoices yet."
                 columns={[
                   { header: 'Invoice', render: (i) => <span className="font-medium">{i.invoiceNo}</span> },
                   { header: 'Client', render: (i) => i.client },
-                  { header: 'Amount', render: (i) => i.amount },
+                  { header: 'Amount', render: (i) => `₹${i.total.toLocaleString('en-IN')}` },
                   { header: 'Due Date', render: (i) => i.dueDate },
                   {
                     header: 'Status',
                     render: (i) => {
-                      const meta = PAYMENT_STATUS_MAP[i.status];
+                      const meta = INVOICE_STATUS_MAP[i.status];
                       return <StatusBadge label={meta.label} tone={meta.tone} />;
                     },
                   },
                   {
                     header: 'Action',
                     render: (i) => (
-                      <Button variant={i.status === 'overdue' ? 'danger' : 'secondary'} size="sm">
+                      <Button
+                        variant={i.status === 'overdue' ? 'danger' : 'secondary'}
+                        size="sm"
+                        onClick={() => handleInvoiceAction(i)}
+                      >
                         {i.status === 'paid' ? 'View' : i.status === 'overdue' ? 'Remind' : 'Record'}
                       </Button>
                     ),
@@ -95,25 +135,26 @@ export default function BooksOverview() {
                   View all
                 </button>
               </div>
-              <DataTable<RecentBill>
-                data={RECENT_BILLS}
+              <DataTable<Bill>
+                data={recentBills}
                 rowKey={(b) => b.id}
+                emptyMessage="No bills yet."
                 columns={[
                   { header: 'Bill #', render: (b) => <span className="font-medium">{b.billNo}</span> },
                   { header: 'Vendor', render: (b) => b.vendor },
-                  { header: 'Amount', render: (b) => b.amount },
+                  { header: 'Amount', render: (b) => `₹${b.total.toLocaleString('en-IN')}` },
                   { header: 'Due', render: (b) => b.dueDate },
                   {
                     header: 'Status',
                     render: (b) => {
-                      const meta = PAYMENT_STATUS_MAP[b.status];
+                      const meta = BILL_STATUS_MAP[b.status];
                       return <StatusBadge label={meta.label} tone={meta.tone} />;
                     },
                   },
                   {
                     header: 'Action',
                     render: (b) => (
-                      <Button variant="secondary" size="sm">
+                      <Button variant="secondary" size="sm" onClick={() => handleBillAction(b)}>
                         {b.status === 'due' ? 'Pay' : 'View'}
                       </Button>
                     ),
@@ -189,6 +230,8 @@ export default function BooksOverview() {
           </div>
         </div>
       </div>
+
+      {toastMessage && <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />}
     </div>
   );
 }

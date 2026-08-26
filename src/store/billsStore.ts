@@ -52,6 +52,11 @@ export function addBill(input: NewBillInput): Bill {
   return newBill;
 }
 
+export function updateBillStatus(id: string, status: BillStatus): void {
+  bills = bills.map((b) => (b.id === id ? { ...b, status } : b));
+  emitChange();
+}
+
 export function useBills(): Bill[] {
   return useSyncExternalStore(subscribe, getSnapshot);
 }

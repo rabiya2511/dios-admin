@@ -20,7 +20,7 @@ function getSnapshot() {
 
 function nextInvoiceNumber(): string {
   const numbers = invoices
-    .map((inv) => parseInt(inv.invoiceNo.replace('#INV-', ''), 10))
+    .map((i) => parseInt(i.invoiceNo.replace('#INV-', ''), 10))
     .filter((n) => !Number.isNaN(n));
   const max = numbers.length ? Math.max(...numbers) : 0;
   return `#INV-${String(max + 1).padStart(4, '0')}`;
@@ -50,6 +50,11 @@ export function addInvoice(input: NewInvoiceInput): Invoice {
   invoices = [newInvoice, ...invoices];
   emitChange();
   return newInvoice;
+}
+
+export function updateInvoiceStatus(id: string, status: InvoiceStatus): void {
+  invoices = invoices.map((i) => (i.id === id ? { ...i, status } : i));
+  emitChange();
 }
 
 export function useInvoices(): Invoice[] {
