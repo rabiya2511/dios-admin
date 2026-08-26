@@ -8,6 +8,7 @@ import { ExpensesProvider } from '@/context/ExpensesContext';
 import { InvoicesProvider } from '@/context/InvoicesContext';
 import { ProvidersProvider } from '@/context/ProvidersContext';
 import { ProviderContextProvider } from '@/context/ProviderContext';
+import { LedgerProvider } from '@/context/LedgerContext';
 import { router } from '@/routes';
 
 const queryClient = new QueryClient({
@@ -30,7 +31,9 @@ export default function App() {
                 <InvoicesProvider>
                   <ProvidersProvider>
                     <ProviderContextProvider>
-                      <RouterProvider router={router} />
+                      <LedgerProvider>
+                        <RouterProvider router={router} />
+                      </LedgerProvider>
                     </ProviderContextProvider>
                   </ProvidersProvider>
                 </InvoicesProvider>

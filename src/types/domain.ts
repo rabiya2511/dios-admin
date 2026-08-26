@@ -102,8 +102,18 @@ export interface Bill {
   status: BillStatus;
 }
 
-export type ExpenseStatus = 'approved' | 'pending';
-export type ExpenseCategory = 'Tech' | 'Marketing' | 'Office' | 'Meals' | 'Software';
+export type ExpenseStatus = 'approved' | 'pending' | 'rejected';
+export type ExpenseCategory =
+  | 'Tech'
+  | 'Marketing'
+  | 'Office'
+  | 'Meals'
+  | 'Software'
+  | 'Travel'
+  | 'Utilities'
+  | 'Professional Services'
+  | 'Other';
+export type PaymentMethod = 'Bank Transfer' | 'Credit Card' | 'Debit Card' | 'Cash' | 'UPI' | 'Other';
 
 export interface Expense {
   id: string;
@@ -111,9 +121,19 @@ export interface Expense {
   description: string;
   category: ExpenseCategory;
   amount: number;
-  gst: number;
-  paidVia: string;
+  gstRate: number;
+  gstAmount: number;
+  totalAmount: number;
+  paidVia: PaymentMethod;
+  paymentReference?: string;
+  paymentDate?: string;
   status: ExpenseStatus;
+  reimbursable: boolean;
+  taxDeductible: boolean;
+  vendor?: string;
+  invoiceNumber?: string;
+  notes?: string;
+  attachment?: string;
 }
 
 export type AccountType = 'Asset' | 'Liability' | 'Equity' | 'Income' | 'Expense';
@@ -229,3 +249,4 @@ export interface TaskRecord {
   categoryTone: 'blue' | 'orange' | 'green' | 'gray';
   notes?: string;
 }
+

@@ -97,11 +97,41 @@ export const BILLS: Bill[] = [
 ];
 
 export const EXPENSES: Expense[] = [
-  { id: 'e1', date: 'Mar 12', description: 'AWS Infrastructure', category: 'Tech', amount: 6949, gst: 1251, paidVia: 'Bank Transfer', status: 'approved' },
-  { id: 'e2', date: 'Mar 10', description: 'Google Ads Campaign', category: 'Marketing', amount: 15000, gst: 2700, paidVia: 'Credit Card', status: 'approved' },
-  { id: 'e3', date: 'Mar 8', description: 'Office Supplies', category: 'Office', amount: 3200, gst: 576, paidVia: 'Cash', status: 'pending' },
-  { id: 'e4', date: 'Mar 5', description: 'Team Lunch Meeting', category: 'Meals', amount: 2800, gst: 504, paidVia: 'UPI', status: 'approved' },
-  { id: 'e5', date: 'Mar 1', description: 'Tally Software License', category: 'Software', amount: 6780, gst: 1220, paidVia: 'Bank Transfer', status: 'approved' },
+  {
+    id: 'e1', date: 'Mar 12', description: 'AWS Infrastructure', category: 'Tech',
+    amount: 6949, gstRate: 18, gstAmount: 1251, totalAmount: 8200, paidVia: 'Bank Transfer',
+    paymentReference: 'TXN-984521', paymentDate: 'Mar 12', status: 'approved',
+    reimbursable: false, taxDeductible: true, vendor: 'Amazon Web Services',
+    invoiceNumber: 'AWS-INV-2026-0312', notes: 'Infrastructure and cloud hosting charges.',
+  },
+  {
+    id: 'e2', date: 'Mar 10', description: 'Google Ads Campaign', category: 'Marketing',
+    amount: 15000, gstRate: 18, gstAmount: 2700, totalAmount: 17700, paidVia: 'Credit Card',
+    paymentReference: 'TXN-984498', paymentDate: 'Mar 10', status: 'approved',
+    reimbursable: false, taxDeductible: true, vendor: 'Google Ads',
+    invoiceNumber: 'GADS-2026-0310', notes: 'Q1 lead generation campaign spend.',
+  },
+  {
+    id: 'e3', date: 'Mar 8', description: 'Office Supplies', category: 'Office',
+    amount: 3200, gstRate: 18, gstAmount: 576, totalAmount: 3776, paidVia: 'Cash',
+    paymentDate: 'Mar 8', status: 'pending',
+    reimbursable: true, taxDeductible: true, vendor: 'Office Depot',
+    invoiceNumber: 'OD-2026-0308', notes: 'Stationery and printer supplies for the office.',
+  },
+  {
+    id: 'e4', date: 'Mar 5', description: 'Team Lunch Meeting', category: 'Meals',
+    amount: 2800, gstRate: 18, gstAmount: 504, totalAmount: 3304, paidVia: 'UPI',
+    paymentReference: 'UPI-77213', paymentDate: 'Mar 5', status: 'approved',
+    reimbursable: true, taxDeductible: true, vendor: 'The Coastal Kitchen',
+    notes: 'Client kickoff lunch meeting.',
+  },
+  {
+    id: 'e5', date: 'Mar 1', description: 'Tally Software License', category: 'Software',
+    amount: 6780, gstRate: 18, gstAmount: 1220, totalAmount: 8000, paidVia: 'Bank Transfer',
+    paymentReference: 'TXN-984102', paymentDate: 'Mar 1', status: 'approved',
+    reimbursable: false, taxDeductible: true, vendor: 'Tally Solutions',
+    invoiceNumber: 'TALLY-2026-001', notes: 'Annual accounting software license renewal.',
+  },
 ];
 
 export const LEDGER_ACCOUNTS: LedgerAccount[] = [
@@ -308,4 +338,4 @@ export const TASK_RECORDS: TaskRecord[] = [
   { id: 'tq4', ref: 'Unassigned', service: 'FSSAI Application', client: 'Meera Foods', provider: '—', acceptStatus: 'unassigned', priority: 'Medium', createdDate: 'Mar 19, 2026', dueDate: 'Apr 2, 2026', estimatedTime: '~2h', description: 'Food business registration application under FSSAI.', progress: 0, category: 'Food & ISO', categoryTone: 'orange' },
   { id: 'tq17', ref: 'Unassigned', service: 'Website Dev', client: 'TechNova Pvt', provider: '—', acceptStatus: 'unassigned', priority: 'High', createdDate: 'Mar 20, 2026', dueDate: 'Apr 15, 2026', estimatedTime: '~18h', description: 'Landing page redesign for product launch.', progress: 0, category: 'Tech', categoryTone: 'blue' },
   { id: 'tq18', ref: 'Unassigned', service: 'Trademark Filing', client: 'Brandco LLP', provider: '—', acceptStatus: 'unassigned', priority: 'Low', createdDate: 'Mar 20, 2026', dueDate: 'Apr 10, 2026', estimatedTime: '~4h', description: 'Trademark renewal filing.', progress: 0, category: 'Legal', categoryTone: 'gray' },
-];
+];       
