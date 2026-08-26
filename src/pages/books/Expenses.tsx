@@ -9,7 +9,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { Modal } from '@/components/common/Modal';
 import { useExpenses, addExpense } from '@/store/expensesStore';
 import { EXPENSE_STATUS_MAP } from '@/utils/statusMaps';
-import type { Expense, ExpenseCategory, ExpenseStatus } from '@/types/domain';
+import type { Expense, ExpenseCategory, ExpenseStatus, PaymentMethod } from '@/types/domain';
 
 const CATEGORY_TONE: Record<ExpenseCategory, 'blue' | 'gold' | 'green' | 'orange' | 'gray'> = {
   Tech: 'blue',
@@ -20,9 +20,10 @@ const CATEGORY_TONE: Record<ExpenseCategory, 'blue' | 'gold' | 'green' | 'orange
 };
 
 const CATEGORIES: ExpenseCategory[] = ['Tech', 'Marketing', 'Office', 'Meals', 'Software'];
+const PAYMENT_METHODS: PaymentMethod[] = ['Bank Transfer', 'Credit Card', 'Debit Card', 'Cash', 'UPI', 'Other'];
 
-function formatINR(n: number): string {
-  return `₹${n.toLocaleString('en-IN')}`;
+function formatINR(n: number | undefined): string {
+  return `₹${(n ?? 0).toLocaleString('en-IN')}`;
 }
 
 // date is stored as e.g. "Mar 12" with no year in the existing data model.
@@ -40,9 +41,13 @@ interface NewExpenseFormState {
   description: string;
   category: ExpenseCategory;
   amount: string;
-  gst: string;
-  paidVia: string;
+  gstRate: string;
+  paidVia: PaymentMethod;
   status: ExpenseStatus;
+  reimbursable: boolean;
+  taxDeductible: boolean;
+  vendor: string;
+  invoiceNumber: string;
 }
 
 const EMPTY_FORM: NewExpenseFormState = {
@@ -50,9 +55,13 @@ const EMPTY_FORM: NewExpenseFormState = {
   description: '',
   category: 'Tech',
   amount: '',
-  gst: '',
-  paidVia: '',
+  gstRate: '18',
+  paidVia: 'Bank Transfer',
   status: 'pending',
+  reimbursable: false,
+  taxDeductible: true,
+  vendor: '',
+  invoiceNumber: '',
 };
 
 function AddExpenseModal({ onClose }: { onClose: () => void }) {
@@ -60,11 +69,13 @@ function AddExpenseModal({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState<string | null>(null);
 
   const amountNum = parseFloat(form.amount) || 0;
-  const gstNum = parseFloat(form.gst) || 0;
+  const gstRateNum = parseFloat(form.gstRate) || 0;
+  const gstAmount = Math.round(amountNum * (gstRateNum / 100));
+  const total = amountNum + gstAmount;
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!form.date.trim() || !form.description.trim() || !form.category || !form.amount || !form.paidVia.trim()) {
+    if (!form.date.trim() || !form.description.trim() || !form.category || !form.amount || !form.paidVia) {
       setError('Please fill in all required fields.');
       return;
     }
@@ -77,9 +88,13 @@ function AddExpenseModal({ onClose }: { onClose: () => void }) {
       description: form.description.trim(),
       category: form.category,
       amount: amountNum,
-      gst: gstNum,
-      paidVia: form.paidVia.trim(),
+      gstRate: gstRateNum,
+      paidVia: form.paidVia,
       status: form.status,
+      reimbursable: form.reimbursable,
+      taxDeductible: form.taxDeductible,
+      vendor: form.vendor.trim() || undefined,
+      invoiceNumber: form.invoiceNumber.trim() || undefined,
     });
     onClose();
   }
@@ -128,6 +143,25 @@ function AddExpenseModal({ onClose }: { onClose: () => void }) {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
+            <label className="mb-1 block text-[11px] font-medium text-text-muted">Vendor</label>
+            <input
+              value={form.vendor}
+              onChange={(e) => setForm({ ...form, vendor: e.target.value })}
+              className="w-full rounded-lg border border-border-subtle bg-canvas px-3 py-2 text-[12px] text-text-primary outline-none focus:border-gold"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-[11px] font-medium text-text-muted">Invoice Number</label>
+            <input
+              value={form.invoiceNumber}
+              onChange={(e) => setForm({ ...form, invoiceNumber: e.target.value })}
+              className="w-full rounded-lg border border-border-subtle bg-canvas px-3 py-2 text-[12px] text-text-primary outline-none focus:border-gold"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <div>
             <label className="mb-1 block text-[11px] font-medium text-text-muted">Amount (₹) *</label>
             <input
               type="number"
@@ -138,25 +172,39 @@ function AddExpenseModal({ onClose }: { onClose: () => void }) {
             />
           </div>
           <div>
-            <label className="mb-1 block text-[11px] font-medium text-text-muted">GST (₹)</label>
-            <input
-              type="number"
-              min="0"
-              value={form.gst}
-              onChange={(e) => setForm({ ...form, gst: e.target.value })}
+            <label className="mb-1 block text-[11px] font-medium text-text-muted">GST Rate (%)</label>
+            <select
+              value={form.gstRate}
+              onChange={(e) => setForm({ ...form, gstRate: e.target.value })}
               className="w-full rounded-lg border border-border-subtle bg-canvas px-3 py-2 text-[12px] text-text-primary outline-none focus:border-gold"
-            />
+            >
+              <option value="18">18</option>
+              <option value="12">12</option>
+              <option value="5">5</option>
+              <option value="0">0</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-[11px] font-medium text-text-muted">Total</label>
+            <div className="rounded-lg border border-border-subtle bg-canvas px-3 py-2 text-[12px] font-semibold text-text-primary">
+              {formatINR(total)}
+            </div>
           </div>
         </div>
 
         <div>
           <label className="mb-1 block text-[11px] font-medium text-text-muted">Paid Via *</label>
-          <input
-            placeholder="e.g. Bank Transfer, UPI, Cash"
+          <select
             value={form.paidVia}
-            onChange={(e) => setForm({ ...form, paidVia: e.target.value })}
+            onChange={(e) => setForm({ ...form, paidVia: e.target.value as PaymentMethod })}
             className="w-full rounded-lg border border-border-subtle bg-canvas px-3 py-2 text-[12px] text-text-primary outline-none focus:border-gold"
-          />
+          >
+            {PAYMENT_METHODS.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>
@@ -169,6 +217,25 @@ function AddExpenseModal({ onClose }: { onClose: () => void }) {
             <option value="approved">Approved</option>
             <option value="pending">Pending</option>
           </select>
+        </div>
+
+        <div className="flex gap-4 pt-1">
+          <label className="flex items-center gap-2 text-[12px] text-text-primary">
+            <input
+              type="checkbox"
+              checked={form.reimbursable}
+              onChange={(e) => setForm({ ...form, reimbursable: e.target.checked })}
+            />
+            Reimbursable
+          </label>
+          <label className="flex items-center gap-2 text-[12px] text-text-primary">
+            <input
+              type="checkbox"
+              checked={form.taxDeductible}
+              onChange={(e) => setForm({ ...form, taxDeductible: e.target.checked })}
+            />
+            Tax Deductible
+          </label>
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
@@ -189,11 +256,17 @@ export default function Expenses() {
   const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
 
   const totals = useMemo(() => {
-    const totalExpenses = expenses.reduce((sum, e) => sum + e.amount + e.gst, 0);
+    const totalExpenses = expenses.reduce((sum, e) => sum + e.totalAmount, 0);
     const thisMonth = expenses
       .filter((e) => isThisMonth(e.date))
-      .reduce((sum, e) => sum + e.amount + e.gst, 0);
-    return { totalExpenses, thisMonth };
+      .reduce((sum, e) => sum + e.totalAmount, 0);
+    const reimbursable = expenses
+      .filter((e) => e.reimbursable)
+      .reduce((sum, e) => sum + e.totalAmount, 0);
+    const taxDeductible = expenses
+      .filter((e) => e.taxDeductible)
+      .reduce((sum, e) => sum + e.totalAmount, 0);
+    return { totalExpenses, thisMonth, reimbursable, taxDeductible };
   }, [expenses]);
 
   return (
@@ -222,15 +295,18 @@ export default function Expenses() {
             <div className="mt-2 font-display text-2xl font-bold text-text-primary">
               {formatINR(totals.thisMonth)}
             </div>
-            <div className="mt-1 text-[11px] text-danger">↑ 8% vs last</div>
           </Card>
           <Card>
             <div className="text-[10px] font-medium uppercase tracking-wider text-text-muted">Reimbursable</div>
-            <div className="mt-2 font-display text-2xl font-bold text-text-primary">₹12K</div>
+            <div className="mt-2 font-display text-2xl font-bold text-text-primary">
+              {formatINR(totals.reimbursable)}
+            </div>
           </Card>
           <Card>
             <div className="text-[10px] font-medium uppercase tracking-wider text-text-muted">Tax Deductible</div>
-            <div className="mt-2 font-display text-2xl font-bold text-text-primary">₹1.4L</div>
+            <div className="mt-2 font-display text-2xl font-bold text-text-primary">
+              {formatINR(totals.taxDeductible)}
+            </div>
           </Card>
         </div>
 
@@ -246,7 +322,8 @@ export default function Expenses() {
                 render: (e) => <StatusBadge label={e.category} tone={CATEGORY_TONE[e.category]} />,
               },
               { header: 'Amount', render: (e) => formatINR(e.amount) },
-              { header: 'GST', render: (e) => formatINR(e.gst) },
+              { header: 'GST', render: (e) => formatINR(e.gstAmount) },
+              { header: 'Total', render: (e) => <span className="font-semibold">{formatINR(e.totalAmount)}</span> },
               { header: 'Paid Via', render: (e) => e.paidVia },
               {
                 header: 'Status',

@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { EXPENSES as INITIAL_EXPENSES } from '@/constants/mockData';
-import type { Expense, ExpenseCategory, ExpenseStatus } from '@/types/domain';
+import type { Expense, ExpenseCategory, ExpenseStatus, PaymentMethod } from '@/types/domain';
 
 let expenses: Expense[] = [...INITIAL_EXPENSES];
 const listeners = new Set<() => void>();
@@ -23,21 +23,34 @@ export interface NewExpenseInput {
   description: string;
   category: ExpenseCategory;
   amount: number;
-  gst: number;
-  paidVia: string;
+  gstRate: number;
+  paidVia: PaymentMethod;
   status: ExpenseStatus;
+  reimbursable: boolean;
+  taxDeductible: boolean;
+  vendor?: string;
+  invoiceNumber?: string;
+  notes?: string;
 }
 
 export function addExpense(input: NewExpenseInput): Expense {
+  const gstAmount = Math.round(input.amount * (input.gstRate / 100));
   const newExpense: Expense = {
     id: `exp-${Date.now()}`,
     date: input.date,
     description: input.description,
     category: input.category,
     amount: input.amount,
-    gst: input.gst,
+    gstRate: input.gstRate,
+    gstAmount,
+    totalAmount: input.amount + gstAmount,
     paidVia: input.paidVia,
     status: input.status,
+    reimbursable: input.reimbursable,
+    taxDeductible: input.taxDeductible,
+    vendor: input.vendor,
+    invoiceNumber: input.invoiceNumber,
+    notes: input.notes,
   };
   expenses = [newExpense, ...expenses];
   emitChange();
