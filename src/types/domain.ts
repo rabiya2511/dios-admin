@@ -69,6 +69,7 @@ export interface PricingPackage {
   id: string;
   packageName: string;
   serviceName: string;
+  description: string;
   price: number;
   gstPercent: number;
 }
@@ -249,4 +250,3 @@ export interface TaskRecord {
   categoryTone: 'blue' | 'orange' | 'green' | 'gray';
   notes?: string;
 }
-

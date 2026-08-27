@@ -15,6 +15,7 @@ import {
   REVENUE_BY_SERVICE,
   PROVIDER_AVAILABILITY,
 } from '@/constants/mockData';
+
 import { ORDER_STATUS_MAP, PROVIDER_STATUS_MAP } from '@/utils/statusMaps';
 import { useOrders } from '@/context/OrdersContext';
 import type { RecentOrder, UnassignedTask } from '@/types/domain';
@@ -39,9 +40,9 @@ export default function AdminDashboard() {
         <PageHeader title="Admin Dashboard" subtitle="Platform overview and quick actions" />
 
         <div className="mb-3.5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Total Revenue" value="₹8.4L" icon="💰" tone="gold" trend="23% this month" />
-          <StatCard label="Active Orders" value="47" icon="📋" tone="info" trend="8 new today" />
-          <StatCard label="Total Users" value="312" icon="👥" tone="success" trend="14 this week" />
+          <StatCard label="Total Revenue" value="₹8.4L" icon="💰" tone="gold" trend="23% this month" trendDirection="up" />
+          <StatCard label="Active Orders" value="47" icon="📋" tone="info" trend="8 new today" trendDirection="up" />
+          <StatCard label="Total Users" value="312" icon="👥" tone="success" trend="14 this week" trendDirection="up" />
           <StatCard
             label="Pending Tasks"
             value="18"
@@ -49,6 +50,7 @@ export default function AdminDashboard() {
             tone="warning"
             trend="3 unassigned"
             trendDirection="down"
+            trendArrow="up"
           />
         </div>
 
@@ -171,5 +173,4 @@ export default function AdminDashboard() {
       </div>
     </div>
   );
-}
-
+} 

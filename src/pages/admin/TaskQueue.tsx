@@ -9,6 +9,7 @@ import { Toast } from '@/components/common/Toast';
 import { AssignTaskModal } from '@/components/tasks/AssignTaskModal';
 import { ReassignTaskModal } from '@/components/tasks/ReassignTaskModal';
 import { TaskDetailsModal } from '@/components/tasks/TaskDetailsModal';
+import { CreateTaskModal } from '@/components/tasks/CreateTaskModal';
 import { TASK_RECORDS } from '@/constants/mockData';
 import { TASK_STATUS_MAP, TASK_PRIORITY_MAP } from '@/utils/statusMaps';
 import { useTasks } from '@/context/TasksContext';
@@ -46,9 +47,14 @@ export default function TaskQueue() {
   const [detailsTask, setDetailsTask] = useState<TaskRecord | null>(null);
   const [assignTask, setAssignTask] = useState<TaskRecord | null>(null);
   const [reassignTask, setReassignTask] = useState<TaskRecord | null>(null);
+  const [showCreateTask, setShowCreateTask] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const { taskStatuses, updateTaskStatus, taskProviders, updateTaskProvider, taskRefs, updateTaskRef } = useTasks();
+  const { taskStatuses, updateTaskStatus, taskProviders, updateTaskProvider, taskRefs, updateTaskRef, customTasks, addTask } = useTasks();
+
+  // Manually created tasks are merged in alongside the seeded mock data, so they
+  // participate in the same filters/counts/search as everything else.
+  const allTasks = useMemo(() => [...customTasks, ...TASK_RECORDS], [customTasks]);
 
   function liveStatus(task: TaskRecord): TaskAcceptStatus {
     return taskStatuses[task.id] ?? task.acceptStatus;
@@ -62,7 +68,7 @@ export default function TaskQueue() {
 
   const counts = useMemo(() => {
     const c: Record<TaskFilter, number> = { all: 0, unassigned: 0, pending: 0, 'in-progress': 0, rejected: 0 };
-    TASK_RECORDS.forEach((t) => {
+    allTasks.forEach((t) => {
       const s = liveStatus(t);
       FILTERS.forEach((f) => {
         if (matchesFilter(s, f.key)) c[f.key] += 1;
@@ -70,11 +76,11 @@ export default function TaskQueue() {
     });
     return c;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [taskStatuses]);
+  }, [allTasks, taskStatuses]);
 
   const filteredTasks = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return TASK_RECORDS.filter((t) => {
+    return allTasks.filter((t) => {
       const s = liveStatus(t);
       const p = liveProvider(t);
       const r = liveRef(t);
@@ -88,7 +94,7 @@ export default function TaskQueue() {
       );
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, search, taskStatuses, taskProviders, taskRefs]);
+  }, [allTasks, filter, search, taskStatuses, taskProviders, taskRefs]);
 
   function showToast(message: string) {
     setToastMessage(message);
@@ -112,6 +118,12 @@ export default function TaskQueue() {
     showToast('Task reassigned successfully.');
   }
 
+  function handleCreateTask(task: TaskRecord) {
+    addTask(task);
+    setShowCreateTask(false);
+    showToast(task.provider === '—' ? 'Task created and left unassigned.' : 'Task created and assigned.');
+  }
+
   function toUnassignedTaskShape(task: TaskRecord): UnassignedTask {
     return {
       id: task.id,
@@ -126,7 +138,15 @@ export default function TaskQueue() {
     <div>
       <Topbar />
       <div className="p-5">
-        <PageHeader title="Task Queue" subtitle="Full accept/reject workflow tracking across all orders" />
+        <PageHeader
+          title="Task Queue"
+          subtitle="Full accept/reject workflow tracking across all orders"
+          action={
+            <Button variant="gold" size="sm" onClick={() => setShowCreateTask(true)}>
+              + Create Task
+            </Button>
+          }
+        />
 
         <div className="mb-3.5 flex flex-wrap gap-2">
           {FILTERS.map((f) => (
@@ -246,6 +266,10 @@ export default function TaskQueue() {
             onClose={() => setReassignTask(null)}
             onReassigned={handleReassignSubmit}
           />
+        )}
+
+        {showCreateTask && (
+          <CreateTaskModal onClose={() => setShowCreateTask(false)} onCreate={handleCreateTask} />
         )}
 
         {toastMessage && <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />}

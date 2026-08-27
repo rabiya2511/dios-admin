@@ -6,8 +6,11 @@ import { DataTable } from '@/components/common/DataTable';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Avatar } from '@/components/common/Avatar';
 import { Button } from '@/components/common/Button';
+import { Toast } from '@/components/common/Toast';
 import { EditUserModal } from '@/components/users/EditUserModal';
 import { BlockUserModal } from '@/components/users/BlockUserModal';
+import { DeleteUserModal } from '@/components/users/DeleteUserModal';
+import { InviteUserModal } from '@/components/users/InviteUserModal';
 import { useUsers } from '@/hooks/useUsers';
 import { USER_STATUS_MAP } from '@/utils/statusMaps';
 import type { AdminUser } from '@/types/domain';
@@ -15,11 +18,14 @@ import type { AdminUser } from '@/types/domain';
 type FilterValue = 'all' | 'active' | 'inactive' | 'blocked';
 
 export default function Users() {
-  const { users, unblockUser } = useUsers();
+  const { users, unblockUser, deleteUser, inviteUser } = useUsers();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterValue>('all');
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [blockingUser, setBlockingUser] = useState<AdminUser | null>(null);
+  const [deletingUser, setDeletingUser] = useState<AdminUser | null>(null);
+  const [showInviteUser, setShowInviteUser] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
@@ -31,11 +37,23 @@ export default function Users() {
     });
   }, [users, search, filter]);
 
+  function handleDeleteConfirm(userId: string) {
+    const user = users.find((u) => u.id === userId);
+    deleteUser(userId);
+    setToastMessage(`${user?.name ?? 'User'} has been deleted.`);
+  }
+
+  function handleInvite(input: Parameters<typeof inviteUser>[0]) {
+    inviteUser(input);
+    setShowInviteUser(false);
+    setToastMessage(`${input.name} has been invited.`);
+  }
+
   return (
     <div>
       <Topbar
         actions={
-          <Button variant="primary" size="sm">
+          <Button variant="primary" size="sm" onClick={() => setShowInviteUser(true)}>
             + Invite User
           </Button>
         }
@@ -103,6 +121,14 @@ export default function Users() {
                         Block
                       </Button>
                     )}
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => setDeletingUser(u)}
+                      aria-label={`Delete ${u.name}`}
+                    >
+                      🗑
+                    </Button>
                   </div>
                 ),
               },
@@ -113,6 +139,17 @@ export default function Users() {
 
       {editingUser && <EditUserModal user={editingUser} onClose={() => setEditingUser(null)} />}
       {blockingUser && <BlockUserModal user={blockingUser} onClose={() => setBlockingUser(null)} />}
+      {deletingUser && (
+        <DeleteUserModal
+          user={deletingUser}
+          onClose={() => setDeletingUser(null)}
+          onConfirm={handleDeleteConfirm}
+        />
+      )}
+      {showInviteUser && (
+        <InviteUserModal onClose={() => setShowInviteUser(false)} onInvite={handleInvite} />
+      )}
+      {toastMessage && <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />}
     </div>
   );
-}
+}  

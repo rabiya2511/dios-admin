@@ -17,9 +17,23 @@ const CATEGORY_TONE: Record<ExpenseCategory, 'blue' | 'gold' | 'green' | 'orange
   Office: 'gray',
   Meals: 'gray',
   Software: 'blue',
+  Travel: 'gold',
+  Utilities: 'green',
+  'Professional Services': 'orange',
+  Other: 'gray',
 };
 
-const CATEGORIES: ExpenseCategory[] = ['Tech', 'Marketing', 'Office', 'Meals', 'Software'];
+const CATEGORIES: ExpenseCategory[] = [
+  'Tech',
+  'Marketing',
+  'Office',
+  'Meals',
+  'Software',
+  'Travel',
+  'Utilities',
+  'Professional Services',
+  'Other',
+];
 const PAYMENT_METHODS: PaymentMethod[] = ['Bank Transfer', 'Credit Card', 'Debit Card', 'Cash', 'UPI', 'Other'];
 
 function formatINR(n: number | undefined): string {

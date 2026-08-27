@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Topbar } from '@/components/layout/Topbar';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Card } from '@/components/common/Card';
@@ -10,9 +10,9 @@ import type { AdminService, PricingPackage, ServiceCategory } from '@/types/doma
 
 const CATEGORIES: ServiceCategory[] = ['Legal', 'Design', 'Tech', 'Finance', 'Food & ISO'];
 
-const EMPTY_FORM = { name: '', category: 'Legal' as ServiceCategory, price: '', description: '' };
+const EMPTY_FORM = { name: '', category: 'Legal' as ServiceCategory, price: '', description: '', icon: '' };
 
-const EMPTY_PACKAGE_FORM = { packageName: '', serviceName: '', price: '', gstPercent: '18' };
+const EMPTY_PACKAGE_FORM = { packageName: '', serviceName: '', description: '', price: '', gstPercent: '18' };
 
 /** Single source of truth for package total math — used in the table and the live form preview. */
 function calculatePackageTotal(price: number, gstPercent: number): number {
@@ -22,6 +22,7 @@ function calculatePackageTotal(price: number, gstPercent: number): number {
 function validatePackageForm(form: typeof EMPTY_PACKAGE_FORM): string {
   if (!form.packageName.trim()) return 'Package name is required.';
   if (!form.serviceName.trim()) return 'Service is required.';
+  if (!form.description.trim()) return 'Package description is required.';
   const price = Number(form.price);
   if (!form.price || Number.isNaN(price) || price <= 0) return 'Price must be a valid positive number.';
   const gst = Number(form.gstPercent);
@@ -31,12 +32,24 @@ function validatePackageForm(form: typeof EMPTY_PACKAGE_FORM): string {
   return '';
 }
 
+/** Finds an existing service with the same name (case-insensitive), so repeated names always share one icon. */
+function findExistingByName(services: AdminService[], name: string): AdminService | undefined {
+  const trimmed = name.trim().toLowerCase();
+  if (!trimmed) return undefined;
+  return services.find((s) => s.name.trim().toLowerCase() === trimmed);
+}
+
 export default function ServicesPricing() {
   const [services, setServices] = useState<AdminService[]>(ADMIN_SERVICES);
   const [packages, setPackages] = useState<PricingPackage[]>(PRICING_PACKAGES);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [addForm, setAddForm] = useState(EMPTY_FORM);
+  const [iconLocked, setIconLocked] = useState(false);
+
+  const [selectedPackageNames, setSelectedPackageNames] = useState<string[]>([]);
+  const [newPackagePrices, setNewPackagePrices] = useState<Record<string, string>>({});
+  const [newPackageDescriptions, setNewPackageDescriptions] = useState<Record<string, string>>({});
 
   const [editingService, setEditingService] = useState<AdminService | null>(null);
   const [editForm, setEditForm] = useState(EMPTY_FORM);
@@ -47,18 +60,65 @@ export default function ServicesPricing() {
   const [editPackageForm, setEditPackageForm] = useState(EMPTY_PACKAGE_FORM);
   const [packageFormError, setPackageFormError] = useState('');
 
+  // Unique package tier names already used anywhere (e.g. Starter, Growth, Enterprise),
+  // offered as selectable templates when creating a new service.
+  const availablePackageNames = useMemo(() => {
+    const names = new Set(packages.map((p) => p.packageName));
+    return Array.from(names);
+  }, [packages]);
+
+  // Auto-fill (and lock) the icon field whenever the typed name matches an existing service,
+  // so the same service name always renders with the same emoji.
+  useEffect(() => {
+    const match = findExistingByName(services, addForm.name);
+    if (match) {
+      setAddForm((f) => (f.icon === match.icon ? f : { ...f, icon: match.icon }));
+      setIconLocked(true);
+    } else {
+      setIconLocked(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addForm.name, services]);
+
+  function togglePackageName(name: string) {
+    setSelectedPackageNames((prev) =>
+      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
+    );
+  }
+
   function handleAddService() {
     if (!addForm.name.trim()) return;
+
+    const existingMatch = findExistingByName(services, addForm.name);
+    const resolvedIcon = existingMatch ? existingMatch.icon : addForm.icon.trim() || '⚡';
+
     const newService: AdminService = {
       id: `s${Date.now()}`,
       name: addForm.name,
       category: addForm.category,
       description: addForm.description,
       startingPrice: Number(addForm.price) || 0,
-      icon: '⚡',
+      icon: resolvedIcon,
     };
     setServices((prev) => [...prev, newService]);
+
+    if (selectedPackageNames.length > 0) {
+      const newPackages: PricingPackage[] = selectedPackageNames.map((name) => ({
+        id: `p${Date.now()}-${name}`,
+        packageName: name,
+        serviceName: newService.name,
+        description: newPackageDescriptions[name] ?? '',
+        price: Number(newPackagePrices[name]) || 0,
+        gstPercent: 18,
+      }));
+      setPackages((prev) => [...prev, ...newPackages]);
+    }
+
     setAddForm(EMPTY_FORM);
+    setSelectedPackageNames([]);
+    setNewPackagePrices({});
+    setNewPackageDescriptions({});
+    setIconLocked(false);
     setShowAddForm(false);
   }
 
@@ -69,6 +129,7 @@ export default function ServicesPricing() {
       category: service.category,
       price: String(service.startingPrice),
       description: service.description,
+      icon: service.icon,
     });
   }
 
@@ -77,7 +138,7 @@ export default function ServicesPricing() {
     setServices((prev) =>
       prev.map((s) =>
         s.id === editingService.id
-          ? { ...s, name: editForm.name, category: editForm.category, description: editForm.description, startingPrice: Number(editForm.price) || 0 }
+          ? { ...s, name: editForm.name, category: editForm.category, description: editForm.description, startingPrice: Number(editForm.price) || 0, icon: editForm.icon.trim() || s.icon }
           : s,
       ),
     );
@@ -102,6 +163,7 @@ export default function ServicesPricing() {
       id: `p${Date.now()}`,
       packageName: addPackageForm.packageName,
       serviceName: addPackageForm.serviceName,
+      description: addPackageForm.description,
       price: Number(addPackageForm.price),
       gstPercent: Number(addPackageForm.gstPercent),
     };
@@ -122,6 +184,7 @@ export default function ServicesPricing() {
     setEditPackageForm({
       packageName: pkg.packageName,
       serviceName: pkg.serviceName,
+      description: pkg.description,
       price: String(pkg.price),
       gstPercent: String(pkg.gstPercent),
     });
@@ -142,6 +205,7 @@ export default function ServicesPricing() {
               ...p,
               packageName: editPackageForm.packageName,
               serviceName: editPackageForm.serviceName,
+              description: editPackageForm.description,
               price: Number(editPackageForm.price),
               gstPercent: Number(editPackageForm.gstPercent),
             }
@@ -174,7 +238,7 @@ export default function ServicesPricing() {
         {showAddForm && (
           <Card className="mb-3.5">
             <h3 className="mb-3.5 text-[14px] font-semibold text-text-primary">Add New Service</h3>
-            <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
                   Service Name
@@ -214,6 +278,24 @@ export default function ServicesPricing() {
                   className="rounded-lg border border-border-subtle bg-canvas px-3 py-2 text-[12px] text-text-primary outline-none focus:border-gold"
                 />
               </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+                  Icon (emoji)
+                </label>
+                <input
+                  value={addForm.icon}
+                  onChange={(e) => setAddForm((f) => ({ ...f, icon: e.target.value }))}
+                  placeholder="e.g. 🏢"
+                  disabled={iconLocked}
+                  maxLength={4}
+                  className="rounded-lg border border-border-subtle bg-canvas px-3 py-2 text-[12px] text-text-primary outline-none focus:border-gold disabled:opacity-60"
+                />
+                {iconLocked && (
+                  <span className="text-[10px] text-text-muted">
+                    Matches an existing service — icon locked for consistency.
+                  </span>
+                )}
+              </div>
             </div>
             <div className="mb-3.5 flex flex-col gap-1.5">
               <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
@@ -226,6 +308,58 @@ export default function ServicesPricing() {
                 className="rounded-lg border border-border-subtle bg-canvas px-3 py-2 text-[12px] text-text-primary outline-none focus:border-gold"
               />
             </div>
+
+            <div className="mb-3.5">
+              <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+                Packages
+              </label>
+              {availablePackageNames.length === 0 ? (
+                <p className="text-[11px] text-text-muted">
+                  No packages exist yet — add one below in the Package Pricing Editor after saving this service.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {availablePackageNames.map((name) => {
+                    const checked = selectedPackageNames.includes(name);
+                    return (
+                      <div key={name} className="flex flex-col gap-1.5 rounded-lg border border-border-subtle p-2.5">
+                        <label className="flex items-center gap-2 text-[12px] font-medium text-text-primary">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => togglePackageName(name)}
+                            className="h-3.5 w-3.5 accent-gold"
+                          />
+                          {name}
+                        </label>
+                        {checked && (
+                          <div className="grid grid-cols-1 gap-2 pl-5.5 sm:grid-cols-2">
+                            <input
+                              type="number"
+                              value={newPackagePrices[name] ?? ''}
+                              onChange={(e) =>
+                                setNewPackagePrices((prev) => ({ ...prev, [name]: e.target.value }))
+                              }
+                              placeholder="Price (₹)"
+                              className="rounded-lg border border-border-subtle bg-canvas px-3 py-1.5 text-[12px] text-text-primary outline-none focus:border-gold"
+                            />
+                            <input
+                              value={newPackageDescriptions[name] ?? ''}
+                              onChange={(e) =>
+                                setNewPackageDescriptions((prev) => ({ ...prev, [name]: e.target.value }))
+                              }
+                              placeholder="Describe what this package includes"
+                              className="rounded-lg border border-border-subtle bg-canvas px-3 py-1.5 text-[12px] text-text-primary outline-none focus:border-gold"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-2">
               <Button variant="primary" size="sm" onClick={handleAddService}>
                 Save Service
@@ -242,7 +376,7 @@ export default function ServicesPricing() {
             <h3 className="mb-3.5 text-[14px] font-semibold text-text-primary">
               Edit Service — {editingService.name}
             </h3>
-            <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
                   Service Name
@@ -277,6 +411,17 @@ export default function ServicesPricing() {
                   type="number"
                   value={editForm.price}
                   onChange={(e) => setEditForm((f) => ({ ...f, price: e.target.value }))}
+                  className="rounded-lg border border-border-subtle bg-canvas px-3 py-2 text-[12px] text-text-primary outline-none focus:border-gold"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+                  Icon (emoji)
+                </label>
+                <input
+                  value={editForm.icon}
+                  onChange={(e) => setEditForm((f) => ({ ...f, icon: e.target.value }))}
+                  maxLength={4}
                   className="rounded-lg border border-border-subtle bg-canvas px-3 py-2 text-[12px] text-text-primary outline-none focus:border-gold"
                 />
               </div>
@@ -364,6 +509,18 @@ export default function ServicesPricing() {
                 />
               </div>
             </div>
+            <div className="mb-3.5 flex flex-col gap-1.5">
+              <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+                Package Description
+              </label>
+              <textarea
+                value={addPackageForm.description}
+                onChange={(e) => setAddPackageForm((f) => ({ ...f, description: e.target.value }))}
+                placeholder="Describe what's included in this package"
+                rows={2}
+                className="resize-none rounded-lg border border-border-subtle bg-canvas px-3 py-2 text-[12px] text-text-primary outline-none focus:border-gold"
+              />
+            </div>
             <div className="mb-3.5 text-[12px] text-text-muted">
               Total:{' '}
               <span className="font-semibold text-text-primary">
@@ -435,6 +592,17 @@ export default function ServicesPricing() {
                 />
               </div>
             </div>
+            <div className="mb-3.5 flex flex-col gap-1.5">
+              <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+                Package Description
+              </label>
+              <textarea
+                value={editPackageForm.description}
+                onChange={(e) => setEditPackageForm((f) => ({ ...f, description: e.target.value }))}
+                rows={2}
+                className="resize-none rounded-lg border border-border-subtle bg-canvas px-3 py-2 text-[12px] text-text-primary outline-none focus:border-gold"
+              />
+            </div>
             <div className="mb-3.5 text-[12px] text-text-muted">
               Total:{' '}
               <span className="font-semibold text-text-primary">
@@ -472,6 +640,10 @@ export default function ServicesPricing() {
             columns={[
               { header: 'Package Name', render: (p) => p.packageName },
               { header: 'Service', render: (p) => p.serviceName },
+              {
+                header: 'Description',
+                render: (p) => <span className="text-text-muted">{p.description || '—'}</span>,
+              },
               {
                 header: 'Price (₹)',
                 render: (p) => (

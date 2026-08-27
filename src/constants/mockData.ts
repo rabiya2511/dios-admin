@@ -74,10 +74,10 @@ export const ADMIN_SERVICES: AdminService[] = [
 ];
 
 export const PRICING_PACKAGES: PricingPackage[] = [
-  { id: 'p1', packageName: 'Starter', serviceName: 'Company Reg.', price: 4999, gstPercent: 18 },
-  { id: 'p2', packageName: 'Growth', serviceName: 'Company Reg.', price: 9999, gstPercent: 18 },
-  { id: 'p3', packageName: 'Enterprise', serviceName: 'Company Reg.', price: 18999, gstPercent: 18 },
-  { id: 'p4', packageName: 'Starter', serviceName: 'Branding', price: 8999, gstPercent: 18 },
+  { id: 'p1', packageName: 'Starter', serviceName: 'Company Reg.', description: 'For solo founders — core registration only', price: 4999, gstPercent: 18 },
+  { id: 'p2', packageName: 'Growth', serviceName: 'Company Reg.', description: 'For funded startups — includes GST, PAN & CA support', price: 9999, gstPercent: 18 },
+  { id: 'p3', packageName: 'Enterprise', serviceName: 'Company Reg.', description: 'Full-stack launch — trademark, HR setup & dedicated manager', price: 18999, gstPercent: 18 },
+  { id: 'p4', packageName: 'Starter', serviceName: 'Branding', description: 'Logo and basic brand kit', price: 8999, gstPercent: 18 },
 ];
 
 export const INVOICES: Invoice[] = [

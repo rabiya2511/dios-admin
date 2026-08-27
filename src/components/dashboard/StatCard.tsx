@@ -1,3 +1,5 @@
+import { ArrowUp, ArrowDown } from 'lucide-react';
+
 type StatTone = 'gold' | 'info' | 'success' | 'warning' | 'danger';
 type TrendDirection = 'up' | 'down' | 'neutral';
 
@@ -22,9 +24,22 @@ interface StatCardProps {
   tone: StatTone;
   trend?: string;
   trendDirection?: TrendDirection;
+  /** Which arrow to show. Defaults to matching trendDirection, but can differ
+   *  (e.g. Pending Tasks shows an "up" arrow while colored as a warning). */
+  trendArrow?: 'up' | 'down';
 }
 
-export function StatCard({ label, value, icon, tone, trend, trendDirection = 'neutral' }: StatCardProps) {
+export function StatCard({
+  label,
+  value,
+  icon,
+  tone,
+  trend,
+  trendDirection = 'neutral',
+  trendArrow,
+}: StatCardProps) {
+  const ArrowIcon = (trendArrow ?? trendDirection) === 'down' ? ArrowDown : ArrowUp;
+
   return (
     <div className="relative rounded-xl border border-border-subtle bg-surface p-4">
       <span
@@ -39,7 +54,17 @@ export function StatCard({ label, value, icon, tone, trend, trendDirection = 'ne
         {label}
       </div>
       <div className="font-display text-[26px] font-bold leading-none text-text-primary">{value}</div>
-      {trend && <div className={['mt-[5px] text-[11px]', TREND_COLOR_CLASSES[trendDirection]].join(' ')}>{trend}</div>}
+      {trend && (
+        <div
+          className={[
+            'mt-[5px] inline-flex items-center gap-0.5 text-[11px]',
+            TREND_COLOR_CLASSES[trendDirection],
+          ].join(' ')}
+        >
+          <ArrowIcon size={10} strokeWidth={2.5} />
+          {trend}
+        </div>
+      )}
     </div>
   );
 }
