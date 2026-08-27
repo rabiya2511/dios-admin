@@ -32,6 +32,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { id: 'a-providers', label: 'Provider Onboarding  ', pageTitle: 'Service Providers', to: '/admin/providers', icon: Handshake, mode: 'admin' },
       { id: 'a-tasks', label: 'Task Queue', to: '/admin/tasks', icon: ListTodo, badge: 3, mode: 'admin' },
       { id: 'a-settings', label: 'Platform Settings', pageTitle: 'Platform Settings', to: '/admin/settings', icon: Settings, mode: 'admin' },
+      { id: 'a-earnings', label: 'Earnings', pageTitle: 'Platform Earnings', to: '/admin/earnings', icon: IndianRupee, mode: 'admin' },
     ],
   },
   {

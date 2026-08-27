@@ -20,6 +20,7 @@ import TaskInbox from '@/pages/provider/TaskInbox';
 import ActiveTasks from '@/pages/provider/ActiveTasks';
 import CompletedTasks from '@/pages/provider/CompletedTasks';
 import Earnings from '@/pages/provider/Earnings';
+import AdminEarnings from '@/pages/admin/AdminEarnings';
 
 export const router = createBrowserRouter([
   {
@@ -33,6 +34,7 @@ export const router = createBrowserRouter([
       { path: '/admin/providers', element: <Providers /> },
       { path: '/admin/tasks', element: <TaskQueue /> },
       { path: '/admin/settings', element: <AdminSettings /> },
+      { path: '/admin/earnings', element: <AdminEarnings /> },
       { path: '/books/overview', element: <BooksOverview /> },
       { path: '/books/invoices', element: <Invoices /> },
       { path: '/books/invoices/new', element: <CreateInvoice /> },
