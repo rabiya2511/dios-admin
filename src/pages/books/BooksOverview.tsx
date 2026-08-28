@@ -14,6 +14,21 @@ import { useBills, updateBillStatus } from '@/store/billsStore';
 import { INVOICE_STATUS_MAP, BILL_STATUS_MAP } from '@/utils/statusMaps';
 import type { Invoice, Bill } from '@/types/domain';
 
+function downloadCSV(filename: string, rows: (string | number)[][]) {
+  const csv = rows
+    .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 export default function BooksOverview() {
   const navigate = useNavigate();
   const invoices = useInvoices();
@@ -49,6 +64,17 @@ export default function BooksOverview() {
     navigate('/books/bills');
   }
 
+  function handleExport() {
+    const rows: (string | number)[][] = [
+      ['Type', 'Reference', 'Party', 'Amount', 'Due Date', 'Status'],
+      ...invoices.map((i) => ['Invoice', i.invoiceNo, i.client, i.total, i.dueDate, INVOICE_STATUS_MAP[i.status].label]),
+      ...bills.map((b) => ['Bill', b.billNo, b.vendor, b.total, b.dueDate, BILL_STATUS_MAP[b.status].label]),
+    ];
+    const dateStamp = new Date().toISOString().slice(0, 10);
+    downloadCSV(`accounting-overview-${dateStamp}.csv`, rows);
+    setToastMessage('Export downloaded successfully.');
+  }
+
   return (
     <div>
       <Topbar />
@@ -58,7 +84,7 @@ export default function BooksOverview() {
           subtitle="Financial summary — TechVenture Pvt Ltd · FY 2024–25"
           action={
             <div className="flex gap-2">
-              <Button variant="secondary" size="sm">
+              <Button variant="secondary" size="sm" onClick={handleExport}>
                 Export
               </Button>
               <Button variant="gold" size="sm" onClick={() => navigate('/books/invoices/new')}>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Topbar } from '@/components/layout/Topbar';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Card } from '@/components/common/Card';
@@ -42,8 +42,28 @@ function TableHead({ left, right }: { left: string; right: string }) {
   );
 }
 
+// India's financial year runs April–March. If today is Jan–Mar, the current
+// FY started the previous calendar year (e.g. Feb 2026 is still FY 2025–26).
+function getCurrentFYStartYear(): number {
+  const now = new Date();
+  const month = now.getMonth(); // 0 = Jan
+  return month < 3 ? now.getFullYear() - 1 : now.getFullYear();
+}
+
+function formatFY(startYear: number): string {
+  const endYearShort = String(startYear + 1).slice(-2);
+  return `FY ${startYear}–${endYearShort}`;
+}
+
+// Generates the current FY plus a fixed number of prior years, newest first.
+function generateFYOptions(yearsBack: number): string[] {
+  const currentStart = getCurrentFYStartYear();
+  return Array.from({ length: yearsBack + 1 }, (_, i) => formatFY(currentStart - i));
+}
+
 export default function Reports() {
-  const [fy, setFy] = useState('FY 2024–25');
+  const fyOptions = useMemo(() => generateFYOptions(5), []);
+  const [fy, setFy] = useState(fyOptions[0]);
 
   return (
     <div>
@@ -59,8 +79,11 @@ export default function Reports() {
                 onChange={(e) => setFy(e.target.value)}
                 className="w-[140px] rounded-lg border border-border-subtle bg-canvas px-3 py-2 text-[12px] text-text-primary outline-none focus:border-gold"
               >
-                <option>FY 2024–25</option>
-                <option>FY 2023–24</option>
+                {fyOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
               </select>
               <Button variant="secondary" size="sm">
                 Export PDF
