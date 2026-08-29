@@ -4,6 +4,7 @@ import { Moon, Sun, User, Settings, LogOut } from 'lucide-react';
 import { NAV_SECTIONS } from '@/constants/navigation';
 import { SidebarNavItem } from '@/components/layout/SidebarNavItem';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/hooks/useAuth';
 import type { AppMode } from '@/types/navigation';
 
 const MODE_PILL_CLASSES: Record<AppMode, string> = {
@@ -22,6 +23,7 @@ export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -63,8 +65,8 @@ export function Sidebar() {
 
   function handleLogout() {
     setMenuOpen(false);
-    // No auth system wired up yet — placeholder redirect to keep the action functional.
-    navigate('/admin/dashboard');
+    logout();
+    navigate('/login');
   }
 
   return (

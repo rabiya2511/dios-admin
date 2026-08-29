@@ -9,6 +9,7 @@ import { InvoicesProvider } from '@/context/InvoicesContext';
 import { ProvidersProvider } from '@/context/ProvidersContext';
 import { ProviderContextProvider } from '@/context/ProviderContext';
 import { LedgerProvider } from '@/context/LedgerContext';
+import { AuthProvider } from '@/context/AuthContext';
 import { router } from '@/routes';
 
 const queryClient = new QueryClient({
@@ -24,23 +25,25 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <OrdersProvider>
-          <TasksProvider>
-            <UsersProvider>
-              <ExpensesProvider>
-                <InvoicesProvider>
-                  <ProvidersProvider>
-                    <ProviderContextProvider>
-                      <LedgerProvider>
-                        <RouterProvider router={router} />
-                      </LedgerProvider>
-                    </ProviderContextProvider>
-                  </ProvidersProvider>
-                </InvoicesProvider>
-              </ExpensesProvider>
-            </UsersProvider>
-          </TasksProvider>
-        </OrdersProvider>
+        <AuthProvider>
+          <OrdersProvider>
+            <TasksProvider>
+              <UsersProvider>
+                <ExpensesProvider>
+                  <InvoicesProvider>
+                    <ProvidersProvider>
+                      <ProviderContextProvider>
+                        <LedgerProvider>
+                          <RouterProvider router={router} />
+                        </LedgerProvider>
+                      </ProviderContextProvider>
+                    </ProvidersProvider>
+                  </InvoicesProvider>
+                </ExpensesProvider>
+              </UsersProvider>
+            </TasksProvider>
+          </OrdersProvider>
+        </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

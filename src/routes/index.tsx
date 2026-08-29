@@ -21,10 +21,17 @@ import ActiveTasks from '@/pages/provider/ActiveTasks';
 import CompletedTasks from '@/pages/provider/CompletedTasks';
 import Earnings from '@/pages/provider/Earnings';
 import AdminEarnings from '@/pages/admin/AdminEarnings';
+import Login from '@/pages/Login';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 
 export const router = createBrowserRouter([
+  { path: '/login', element: <Login /> },
   {
-    element: <DashboardLayout />,
+    element: (
+      <AuthGuard>
+        <DashboardLayout />
+      </AuthGuard>
+    ),
     children: [
       { index: true, element: <Navigate to="/admin/dashboard" replace /> },
       { path: '/admin/dashboard', element: <AdminDashboard /> },
@@ -51,4 +58,4 @@ export const router = createBrowserRouter([
       { path: '*', element: <Navigate to="/admin/dashboard" replace /> },
     ],
   },
-]);   
+]);
